@@ -1,4 +1,4 @@
-import random
+import random 
 import matplotlib.pyplot as plt
 import time
 import math
@@ -15,6 +15,10 @@ def select_move(possible_moves, weights):
         upto += weight
         if upto >= r:
             return item
+        
+## More clear and readable but slower and tends to change experiment's duration a lot         
+# def select_move(possible_moves, weights):
+#     return random.choices(possible_moves, weights=weights, k=1)[0]
         
 def update_diff(left_value, diagram_value, max_diff):
     if left_value < diagram_value and diagram_value - left_value > max_diff: #other case dont change values max_diff nor left_value
@@ -38,7 +42,7 @@ def update_diff(left_value, diagram_value, max_diff):
 #         left_value = diagram_value
 
 
-def visualize_data(steps, columns, diff, values):
+def visualize_data(steps, columns, diff, values, results):
     ## Uncomment the following lines to visualize the data for m > 1
 
     # plt.figure(figsize=(12, 6))
@@ -77,28 +81,31 @@ def visualize_data(steps, columns, diff, values):
     plt.tight_layout()
     plt.show()
 
+    print(results)
+
 
 class Diagram:
     def __init__(self, max_len):
         self.columns = [1]
         self.len = 1
         self.max_len = max_len
-        self.poss_moves_column = []
-        self.poss_moves_weight = []
 
     def get_new_cell(self,alpha):
+        poss_moves_column = []
+        poss_moves_weight = []
+
         for x in range(self.len):
             if x == 0 or self.columns[x-1] > self.columns[x]: # first column
                 s_value = get_S(x, self.columns[x], alpha)
-                self.poss_moves_column.append(x)
-                self.poss_moves_weight.append(s_value)
+                poss_moves_column.append(x)
+                poss_moves_weight.append(s_value)
         
         x = self.len # add a new column
         s_value = get_S(x, 0, alpha)
-        self.poss_moves_column.append(x)
-        self.poss_moves_weight.append(s_value)
+        poss_moves_column.append(x)
+        poss_moves_weight.append(s_value)
 
-        return select_move(self.poss_moves_column, self.poss_moves_weight)
+        return select_move(poss_moves_column, poss_moves_weight)
 
     ## Uncomment the following lines to visualize the diagram after each simulation
 
@@ -117,8 +124,9 @@ class Diagram:
         plt.show()
 
 
-    def simulate_young_diagram(self, n, columns, step, steps, values, alpha=1):
+    def simulate_young_diagram(self, n, columns, step, steps, values, alpha, sqrt_cache):
         idx = 0
+
         for i in range(n):
             x = self.get_new_cell(alpha)
             if x == self.len:
@@ -126,12 +134,11 @@ class Diagram:
                 self.columns.append(0)
             self.columns[x] += 1
             if (i + 1) == step*(idx + 1):
-                values.append(self.len / math.sqrt(i + 1))
-                steps.append(i + 1)
+                values.append(self.len / sqrt_cache[idx]) #Average length of the diagram
+                if len(steps) < n//step:
+                    steps.append(i + 1)
                 columns.append(self.len)
                 idx += 1
-            self.poss_moves_column.clear()
-            self.poss_moves_weight.clear()
  
 def main():
     m = int(input("Enter the number of repetitions (m): ")) #How many times to repeat the simulation for each number of cells
@@ -139,21 +146,24 @@ def main():
     step = int(input("Enter the step value: ")) #Step value for difference of number of cells between diagrams
     alpha = int(input("Enter alpha value: ")) #Alpha value for the S function
 
-    steps = [] #Save steps for visualization
-    values = [] #Save avg_value for each step
     diff = [] #Save avg_value's maximum difference given between m repetitions
-    columns = [] #Save value for l_n
-
+    steps = [] #Save steps for visualization
+    results = [0] * m #Save results for m repetitions
+    sqrt_cache = [math.sqrt(i) for i in range(step, n + 1, step)] #This is for m>1, to speed up the calculation of sqrt(i + 1)
     start = time.time()
 
     for i in range(m):
-        diagram = Diagram(int(5 * math.sqrt(n)))  # Maximum length of the diagram with approximate value of 5*sqrt(n)
-        diagram.simulate_young_diagram(n, columns, step, steps, values, alpha)
-        
-        print("Time taken: ", time.time() - start)
-        diagram.visualize()
+        values = [] #Save avg_value for each step
+        columns = [] #Save value for l_n
 
-    visualize_data(steps, columns, diff, values)
+        diagram = Diagram(int(5 * math.sqrt(n)))  # Maximum length of the diagram with approximate value of 5*sqrt(n)
+        diagram.simulate_young_diagram(n, columns, step, steps, values, alpha, sqrt_cache)
+        results[i] = values[-1]
+
+    print("Time taken: ", time.time() - start)
+    diagram.visualize()
+
+    visualize_data(steps, columns, diff, values, results)
 
 if __name__ == "__main__":
     main()
