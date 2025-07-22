@@ -118,7 +118,6 @@ class Diagram:
                 y_coords.append(y)
           
         plt.scatter(x_coords, y_coords, marker='s', s=1)
-        plt.gca().set_aspect('equal', adjustable='box')
         plt.xlabel('x')
         plt.ylabel('y')
         plt.show()
@@ -144,7 +143,7 @@ def main():
     m = int(input("Enter the number of repetitions (m): ")) #How many times to repeat the simulation for each number of cells
     n = int(input("Enter the maximum number of cells (n): ")) #Maximum number of cells in the diagram
     step = int(input("Enter the step value: ")) #Step value for difference of number of cells between diagrams
-    alpha = int(input("Enter alpha value: ")) #Alpha value for the S function
+    alpha = float(input("Enter alpha value: ")) #Alpha value for the S function
 
     diff = [] #Save avg_value's maximum difference given between m repetitions
     steps = [] #Save steps for visualization
