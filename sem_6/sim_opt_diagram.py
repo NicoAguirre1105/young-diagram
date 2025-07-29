@@ -51,6 +51,8 @@ def visualize_data(steps, columns, diff, values, results, n, m, alpha, step):
 
     ## Uncomment the following lines to visualize the data for m=1
 
+    title = 'Sum of first row and first column' if alpha > 1 else 'Number of columns'
+
     plt.figure(figsize=(8, 8))
     plt.plot(steps, values, marker='o', linestyle='-', color='r')
     plt.title('Coefficient c_(alpha) calculated for every step')
@@ -64,7 +66,7 @@ def visualize_data(steps, columns, diff, values, results, n, m, alpha, step):
     plt.plot(steps, columns, marker='o', linestyle='-', color='g')
     plt.title('Average Length of the Diagram vs Number of Cells')
     plt.xlabel('Number of Cells')
-    plt.ylabel('Coefficient c_(alpha)')
+    plt.ylabel(f'{title}')
     plt.savefig(f'col_value({n},{m},{alpha},{step}).pdf', format='pdf', bbox_inches='tight')
     plt.tight_layout()
     plt.show()
@@ -177,12 +179,19 @@ class Diagram:
                 self.len += 1
                 self.columns.append(0)
             self.columns[x] += 1
-            if (i + 1) == step*(idx + 1):
+            if (i + 1) == step*(idx + 1) and alpha <= 1:
                 values.append(self.len / sqrt_cache[idx]) #Average length of the diagram
-                if len(steps) < n//step:
+                if len(steps) < n//step:#to dont overdo steps massive when m>1
                     steps.append(i + 1)
                 columns.append(self.len)
                 idx += 1
+            if (i + 1) == step*(idx + 1) and alpha > 1:
+                values.append((self.len + self.columns[0]) / sqrt_cache[idx]) #Average length of the diagram
+                if len(steps) < n//step: #to dont overdo steps massive when m>1
+                    steps.append(i + 1)
+                columns.append(self.len)
+                idx += 1
+            
  
 def main():
     mp.dps = 700  # Set the precision for mpmath
