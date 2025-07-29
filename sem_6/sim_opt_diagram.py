@@ -2,11 +2,8 @@ import random
 import matplotlib.pyplot as plt
 import time
 import math
+from mpmath import mp 
 
-def get_S(x, y, alpha):
-    perimeter = (x + y + 2) * 2 # +2 is because we have index x starting from 0 and we are searching one y + 1 (the cell above the one we already have)
-    return perimeter ** alpha
-        
 ## More clear and readable but slower and tends to change experiment's duration a lot         
 # def select_move(possible_moves, weights):
 #     return random.choices(possible_moves, weights=weights, k=1)[0]
@@ -33,7 +30,7 @@ def update_diff(left_value, diagram_value, max_diff):
 #         left_value = diagram_value
 
 
-def visualize_data(steps, columns, diff, values, results):
+def visualize_data(steps, columns, diff, values, results, n, m, alpha, step):
     ## Uncomment the following lines to visualize the data for m > 1
 
     # plt.figure(figsize=(12, 6))
@@ -59,7 +56,7 @@ def visualize_data(steps, columns, diff, values, results):
     plt.title('Coefficient c_(alpha) calculated for every step')
     plt.xlabel('Number of Cells')
     plt.ylabel('Coefficient c_(alpha)')
-
+    plt.savefig(f'c_alpha({n},{m},{alpha},{step}).pdf', format='pdf', bbox_inches='tight')
     plt.tight_layout()
     plt.show()
 
@@ -68,7 +65,7 @@ def visualize_data(steps, columns, diff, values, results):
     plt.title('Average Length of the Diagram vs Number of Cells')
     plt.xlabel('Number of Cells')
     plt.ylabel('Coefficient c_(alpha)')
-
+    plt.savefig(f'col_value({n},{m},{alpha},{step}).pdf', format='pdf', bbox_inches='tight')
     plt.tight_layout()
     plt.show()
 
@@ -83,8 +80,11 @@ class Diagram:
         self.poss_moves_weight = [1]
         self.last_idx = 0
 
-    def check_new_cell(self, x, alpha):
-        return 0
+    def get_S(self, x, y, alpha):
+        perimeter = (x + y + 2) * 2 # +2 is because we have index x starting from 0 and we are searching one y + 1 (the cell above the one we already have)
+        if perimeter ** alpha == 0.0:
+            return mp.mpf(perimeter) ** alpha
+        return perimeter ** alpha
     
     def select_move(self):
         total = sum(self.poss_moves_weight)
@@ -103,7 +103,7 @@ class Diagram:
         x = self.poss_moves_column[self.last_idx]
         next_x = self.poss_moves_column[self.last_idx + 1] if self.last_idx + 1 < len(self.poss_moves_column) else None
         if x == 0 or self.columns[x-1] > self.columns[x]:
-            s_value = get_S(x, self.columns[x], alpha)
+            s_value = self.get_S(x, self.columns[x], alpha)
             self.poss_moves_weight[self.last_idx] = s_value
             self.last_idx += 1
         else:
@@ -115,7 +115,7 @@ class Diagram:
                 continue
             
             if x + 1 == self.len: #En caso que se agrego el ultimo la vex pasada
-                s_value = get_S(x + 1, 0, alpha)
+                s_value = self.get_S(x + 1, 0, alpha)
                 self.poss_moves_column.append(x + 1)
                 self.poss_moves_weight.append(s_value)
                 check_done = True 
@@ -124,7 +124,7 @@ class Diagram:
 
             x += 1
             if self.columns[x-1] > self.columns[x]: 
-                s_value = get_S(x, self.columns[x], alpha)
+                s_value = self.get_S(x, self.columns[x], alpha)
                 self.poss_moves_column.insert(self.last_idx, x)
                 self.poss_moves_weight.insert(self.last_idx, s_value)
                 self.last_idx += 1
@@ -150,7 +150,7 @@ class Diagram:
 
     ## Uncomment the following lines to visualize the diagram after each simulation
 
-    def visualize(self):
+    def visualize(self, n, m, alpha, step):
         x_coords = []
         y_coords = []
         for x in range(len(self.columns)):
@@ -158,9 +158,13 @@ class Diagram:
                 x_coords.append(x)
                 y_coords.append(y)
           
+        plt.figure(figsize=(8, 8))
         plt.scatter(x_coords, y_coords, marker='s', s=1)
         plt.xlabel('x')
         plt.ylabel('y')
+        plt.title('Young Diagram Visualization')
+        plt.tight_layout()
+        plt.savefig(f'diagram({n},{m},{alpha},{step}).pdf', format='pdf', bbox_inches='tight')
         plt.show()
 
 
@@ -181,6 +185,7 @@ class Diagram:
                 idx += 1
  
 def main():
+    mp.dps = 700  # Set the precision for mpmath
     m = int(input("Enter the number of repetitions (m): ")) #How many times to repeat the simulation for each number of cells
     n = int(input("Enter the maximum number of cells (n): ")) #Maximum number of cells in the diagram
     step = int(input("Enter the step value: ")) #Step value for difference of number of cells between diagrams
@@ -201,9 +206,9 @@ def main():
         results[i] = values[-1]
 
     print("Time taken: ", time.time() - start)
-    diagram.visualize()
+    diagram.visualize(n, m, alpha, step)
 
-    visualize_data(steps, columns, diff, values, results)
+    visualize_data(steps, columns, diff, values, results, n, m, alpha, step)
 
 if __name__ == "__main__":
     main()
